@@ -4,6 +4,8 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var firebase = require('firebase');
+var firebaseRef = new firebase('https://big5dating.firebaseio.com/');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -22,8 +24,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
-app.use('/users', users);
+
+app.use('/api/v1', routes);
+routes.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -56,7 +59,8 @@ app.use(function(err, req, res, next) {
   });
 });
 
-app.set('port', process.env.PORT || 8010);
+
+app.set('port', process.env.PORT || 8000);
 
 var server = app.listen(app.get('port'), function() {
   console.log('Express server listening on port ' + server.address().port);
