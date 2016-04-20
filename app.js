@@ -4,6 +4,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var cors = require('cors');
 var firebase = require('firebase');
 var firebaseRef = new firebase('https://big5dating.firebaseio.com/');
 
@@ -24,6 +25,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(cors());
+app.options('*', cors());
 
 app.use('/api/v1', routes);
 routes.use('/users', users);

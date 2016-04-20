@@ -84,13 +84,10 @@
 			}
 		},
 		{
-			"contents": "/// models/user.js\n\nvar firebase = require('firebase'),\n  crypto = require('crypto'),\n  $q = require('node-promise'),\n  firebaseRef = new Firebase(\"https://big5dating.firebaseio.com/\"),\n  usersRef = firebaseRef.child('users'),\n  userModel = {\n    email: \"\",\n    password: \"\",\n    friends: [],\n    liked: [],\n    seen: [],\n    matches: [],\n    rating_avg: {extraversion: -1, agreeableness: -1, conscientiousness: -1, neuroticism: -1, openness: -1},\n    rating_count: 0,\n    created: 0,\n    lastSignIn: 0,\n    signInCount: 0\n  };\n\nvar extend = function (target, source) {\n  for (var key in source) {\n    // skip loop if the property is from prototype\n    if (!source.hasOwnProperty(key)) continue;\n    if (!target[key]) {\n      target[key] = source[key];\n    }\n  }\n};\nvar formatEmail = function (email) { /// from http://stackoverflow.com/a/14965065/1148769\n  if (!email) return false;\n  email = email.toLowerCase();\n  email = email.replace(/\\./g, ',');\n  return email;\n};\n\nvar getUserRef = function (userObj) {\n  return usersRef.child(formatEmail(userObj.email));\n};\n\nvar encryptPassword = function (password) {\n  return crypto.createHash('sha1').update(password).digest('hex');\n};\n\nvar User = function (obj) {\n  extend(this, userModel);\n  this.email = obj.email;\n  this.password = encryptPassword(obj.password);\n  this.created = +new Date();\n  this.lastSignIn = +new Date();\n  this.signInCount = 0;\n};\n\nvar update = function (userObj, sendData) {\n  var d = $q.defer(),\n    user = getUserRef(userObj);\n  user.update(userObj, function (error) {\n    if (error) {\n      return d.reject(error);\n    }\n    if (sendData) {\n      return d.resolve(userObj);\n    }\n    return d.resolve({status: 200, message: \"User updated\"});\n  });\n  return d.promise;\n};\n\nvar save = function (userObj) {\n  var d = $q.defer(),\n    user = getUserRef(userObj);\n  user.set(userObj, function (error) {\n    if (error) {\n      return d.reject(error);\n    }\n    if (noSendData) {\n      return d.resolve({status: 200, message: \"User updated\"});\n    }\n    return d.resolve(userObj);\n  });\n  return d.promise;\n};\n\nvar create = function (userObj) {\n  var d = $q.defer(),\n    user = getUserRef(userObj);\n  get(userObj)\n    .then(function (data) {\n      return d.reject({status: 401, message: \"Account with that email already exists\"});\n    }, function (err) {\n      user.set(userObj, function (err) {\n        if (err) {\n          return d.reject(err);\n        }\n        get(userObj)\n          .then(function (data) {\n            return d.resolve(data);\n          }, function (err) {\n            return d.reject(err);\n          });\n      });\n    });\n  return d.promise;\n};\n\nvar remove = function (userObj) {\n  var d = $q.defer(),\n    user = getUserRef(userObj);\n\n  user.remove(function (err) {\n    if (err) {\n      return d.reject(err);\n    }\n    return d.resolve({status: 200, message: \"Delete Successful\"});\n  })\n\n  return d.promise;\n};\n\nvar get = function (userObj) {\n  var d = $q.defer(),\n    user = getUserRef(userObj),\n    output = {};\n  usersRef.once('value', function (snapshot) {\n    if (snapshot.child(formatEmail(userObj.email)).exists()) {\n      snapshot.child(formatEmail(userObj.email)).forEach(function (obj) {\n        output[obj.key()] = obj.val();\n      });\n      extend(output, userModel);\n      return d.resolve(output);\n    }\n    return d.reject({'status': 404, 'message': 'Email Not Found'});\n  });\n  return d.promise;\n};\n\nvar login = function (userObj) {\n  var d = $q.defer(),\n    user = getUserRef(userObj),\n    output = {};\n  user.once('value', function (snapshot) {\n    snapshot.forEach(function (obj) {\n      output[obj.key()] = obj.val();\n    });\n    if (!output.email) {\n      return d.reject({'status': 404, 'message': 'Email Not Found'});\n    }\n    if (output.password !== encryptPassword(userObj.password)) {\n      return d.reject({'status': 401, 'message': 'Incorrect password'});\n    }\n    extend(output, userModel);\n    if (userObj.increase) {\n      output.signInCount += 1;\n      output.lastSignIn = +new Date();\n    }\n    update(output);\n    return d.resolve(output);\n  });\n  return d.promise;\n};\n\nvar processSurvey = function (surveyObj) {\n  \n};\n\nmodule.exports = {\n  model: User,\n  update: update,\n  save: save,\n  create: create,\n  delete: remove,\n  login: login,\n  get: get\n};\n",
 			"file": "models/user.js",
-			"file_size": 4227,
-			"file_write_time": 131054762200000000,
 			"settings":
 			{
-				"buffer_size": 4277,
+				"buffer_size": 5493,
 				"line_ending": "Unix",
 				"name": "user.js"
 			}
@@ -99,7 +96,7 @@
 			"file": "routes/users.js",
 			"settings":
 			{
-				"buffer_size": 852,
+				"buffer_size": 952,
 				"line_ending": "Unix"
 			}
 		},
@@ -545,7 +542,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
@@ -554,15 +551,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4277,
+						"buffer_size": 5493,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2165,
-								2165
+								5238,
+								5238
 							]
 						],
 						"settings":
@@ -573,7 +570,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1234.0,
+						"translation.y": 2898.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -585,15 +582,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 852,
+						"buffer_size": 952,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								492,
-								492
+								899,
+								899
 							]
 						],
 						"settings":
@@ -606,7 +603,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
