@@ -162,7 +162,6 @@ var login = function (userObj) {
   return d.promise;
 };
 
-
 //// take in array of responses (q1-q10, values 1-5) and return object with appropriate values
 var calculateSurvey = function (questions) {
   var openness = 0,
@@ -176,17 +175,48 @@ var calculateSurvey = function (questions) {
   neuroticism = (6 - questions[3]) + questions[8]; /// 4R, 9
   openness = (6 - questions[4]) + questions[9]; /// 5R, 10
 
-  return {o: 0, c: 0, e: 0, a: 0, n: 0};
+  return {o: openness, c: conscientiousness, e: extraversion, a: agreeableness, n: neuroticism};
 };
+/// from http://stackoverflow.com/a/16757630/1148769
+/// sample: latest entry (obj); count: # of previous ratings; avg: current averages (obj)
+var calculateRollingAvg = function (obj) {
+  if (obj.count > 0) {
+    /// do it 5 times (one for each entry)
+    obj.avg.o -= (obj.avg.o / obj.count);
+    obj.avg.o += (obj.sample.o / obj.count);
+
+    obj.avg.c -= (obj.avg.c / obj.count);
+    obj.avg.c += (obj.sample.c / obj.count);
+
+    obj.avg.e -= (obj.avg.e / obj.count);
+    obj.avg.e += (obj.sample.e / obj.count);
+
+    obj.avg.a -= (obj.avg.a / obj.count);
+    obj.avg.a += (obj.sample.a / obj.count);
+
+    obj.avg.n -= (obj.avg.n / obj.count);
+    obj.avg.n += (obj.sample.n / obj.count);
+    /// thank god for mnemonics
+  } else {
+    obj.avg = obj.sample;
+  }
+  return obj.avg;
+};
+
 
 var processSurvey = function (surveyObj) {
   var d = $q.defer(),
-    forUser = getUserRef({email: surveyObj.for}), /// be able to update the recipient
-    fromUser = getUserRef({email: surveyObj.from}), /// be able to update the sender
-    surveyResult = {};
-  get(forUser) /// check if the recipient exists first
+    // forUser = getUserRef({email: surveyObj.for}), /// be able to update the recipient
+    // fromUser = getUserRef({email: surveyObj.from}), /// be able to update the sender
+    surveyResult = {},
+    updatedUser = {};
+  get({email: surveyObj.for}) /// check if the recipient exists first
     .then(function (user) {
       surveyResult = calculateSurvey(surveyObj.questions);
+      user.rating_avg = calculateRollingAvg({sample: surveyResult, count: user.rating_count, avg: user.rating_avg});
+      user.rating_count += 1;
+      update(user);
+      d.resolve(surveyResult);
     },
     function (err) {
       d.reject({'status': 404, 'message': 'User Not Found'});
@@ -201,5 +231,6 @@ module.exports = {
   create: create,
   delete: remove,
   login: login,
-  get: get
+  get: get,
+  processSurvey: processSurvey
 };
