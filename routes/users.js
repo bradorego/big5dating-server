@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var UserModel = require('../models/user');
 var errorHandler = function (err, res) {
+  console.log(err);
   res.status(err.status);
   res.send(err);
 };
@@ -46,6 +47,24 @@ router.get('/friends', function (req, res, next) {
 
 router.post('/survey', function (req, res, next) {
   UserModel.processSurvey(req.body)
+    .then(function (data) {
+      res.json(data);
+    }, function (err) {
+      errorHandler(err, res);
+    });
+});
+
+router.post('/liked', function (req, res, next) {
+  UserModel.like({email: req.body.from}, {email: req.body.to}, true)
+    .then(function (data) {
+      res.json(data);
+    }, function (err) {
+      errorHandler(err, res);
+    });
+});
+
+router.post('/disliked', function (req, res, next) {
+  UserModel.like({email: req.body.from}, {email: req.body.to}, false)
     .then(function (data) {
       res.json(data);
     }, function (err) {

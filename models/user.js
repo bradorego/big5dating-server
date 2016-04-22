@@ -319,6 +319,35 @@ var getMatches = function (userObj) {
   return d.promise;
 };
 
+var liked = function (currentUser, viewedUser, liked) {
+  var d = $q.defer();
+  $q.all([
+    get({email: currentUser.email}),
+    get({email: viewedUser.email})
+  ]).then(function (obj) { /// [0] === current, [1] === viewed
+      if (obj[0].seen.indexOf(viewedUser.email) !== -1) {
+        return d.reject({status: 400, message: "User already seen. Ignoring"});
+      }
+      obj[0].seen.push(viewedUser.email);
+      if (liked) {
+        obj[0].liked.push(viewedUser.email);
+        if (obj[1].liked.indexOf(currentUser.email) !== -1) { /// woot
+          obj[0].matched.push(viewedUser.email);
+          obj[1].matched.push(currentUser.email);
+        }
+      }
+      console.log(obj[0]);
+      update(obj[0]); /// update user with seen, liked, matched
+      if (liked) {
+        update(obj[1]); /// only thing changed is if they matched
+      }
+      return d.resolve(obj[0]);
+    }, function (err) {
+      return d.reject(err);
+    });
+  return d.promise;
+};
+
 module.exports = {
   model: User,
   update: update,
@@ -330,5 +359,6 @@ module.exports = {
   processSurvey: processSurvey,
   all: all,
   getFriends: getFriends,
-  matches: getMatches
+  matches: getMatches,
+  like: liked
 };
