@@ -3,6 +3,7 @@
 var firebase = require('firebase'),
   crypto = require('crypto'),
   $q = require('node-promise'),
+  correlation = require('node-correlation'),
   firebaseRef = new Firebase("https://big5dating.firebaseio.com/"),
   usersRef = firebaseRef.child('users'),
   userModel = {
@@ -53,14 +54,21 @@ var User = function (obj) {
   this.signInCount = 0;
 };
 
-var all = function () {
+var all = function (dimension) {
   var d = $q.defer(),
-    output = {};
-  usersRef.once('value', function (snapshot) {
+    // output = {},
+    output = [],
+    ref = usersRef;
+  if (dimension) {
+    ref = ref.orderByChild("rating_avg/" + dimension);
+  }
+  ref.once('value', function (snapshot) {
     snapshot.forEach(function (obj) {
-      output[obj.key()] = obj.val();
+      output.push(obj.val());
     });
-    console.log(output);
+    if (dimension) {
+      output.reverse();
+    }
     d.resolve(output);
   });
   return d.promise;
@@ -256,8 +264,22 @@ var getFriends = function (userObj) {
     snapshot.forEach(function (obj) {
       friends.push(obj.val());
     });
-    console.log(friends);
     d.resolve(friends);
+  });
+  return d.promise;
+};
+
+var compareScores = function (userA, userB) {
+  var d = $q.defer(),
+    scoresA = [], ///Object.keys(userA.rating_avg).map(function(k) { return userA.rating_avg[k]; }),
+    scoresB = []; ///Object.keys(userB.rating_avg).map(function(k) { return userB.rating_avg[k]; });
+  $q.all([
+    get({email: userA.email}),
+    get({email: userB.email})
+  ]).then(function (users) {
+    scoresA = Object.keys(users[0].rating_avg).map(function(k) { return users[0].rating_avg[k]; });
+    scoresB = Object.keys(users[1].rating_avg).map(function(k) { return users[1].rating_avg[k]; });
+    d.resolve((correlation.calc(scoresA, scoresB) * 100) + 100) / 2; /// convert -1..1 to 0..100
   });
   return d.promise;
 };
@@ -272,5 +294,6 @@ module.exports = {
   get: get,
   processSurvey: processSurvey,
   all: all,
-  getFriends: getFriends
+  getFriends: getFriends,
+  compare: compareScores
 };
