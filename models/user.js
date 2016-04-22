@@ -21,6 +21,7 @@ var firebase = require('firebase'),
     signInCount: 0
   };
 
+/// used to ensure the full object is returned to client so we don't have to watch for edge cases
 var extend = function (target, source) {
   for (var key in source) {
     // skip loop if the property is from prototype
@@ -30,6 +31,7 @@ var extend = function (target, source) {
     }
   }
 };
+/// firebase doesn't accept dots, so convert those to commas
 var formatEmail = function (email) { /// from http://stackoverflow.com/a/14965065/1148769
   if (!email) return false;
   email = email.toLowerCase();
@@ -37,14 +39,19 @@ var formatEmail = function (email) { /// from http://stackoverflow.com/a/1496506
   return email;
 };
 
+/// return a firebase reference to the specific user
+/// userObj.email === user's email
 var getUserRef = function (userObj) {
   return usersRef.child(formatEmail(userObj.email));
 };
 
+/// run the same encryption for creation, sign in
 var encryptPassword = function (password) {
   return crypto.createHash('sha1').update(password).digest('hex');
 };
 
+/// used to create a new user object
+/// obj.email === email to use, obj.password === password to encrypt
 var User = function (obj) {
   extend(this, userModel);
   this.email = obj.email;
@@ -54,9 +61,10 @@ var User = function (obj) {
   this.signInCount = 0;
 };
 
+/// return all users in the list
+/// dimension - optional property to organize by
 var all = function (dimension) {
   var d = $q.defer(),
-    // output = {},
     output = [],
     ref = usersRef;
   if (dimension) {
@@ -74,6 +82,9 @@ var all = function (dimension) {
   return d.promise;
 };
 
+/// used to update a user record
+/// userObj - the user to be updated. Used to pull email as well as provide data
+/// sendData - optional param to potentially save bandwidth
 var update = function (userObj, sendData) {
   var d = $q.defer(),
     user = getUserRef(userObj);
@@ -89,6 +100,8 @@ var update = function (userObj, sendData) {
   return d.promise;
 };
 
+/// used to overwrite a user record (probably has no real application)
+/// userObj - user object to overwrite; email pulled out and data will be overwritten
 var save = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj);
@@ -104,6 +117,9 @@ var save = function (userObj) {
   return d.promise;
 };
 
+/// used to create a new user
+/// userObj.email === user's email
+/// userObj.password === user's password
 var create = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj);
@@ -127,6 +143,8 @@ var create = function (userObj) {
   return d.promise;
 };
 
+/// used to delete users outright (probably also never used)
+/// userObj - user to be removed. Email will be extracted and record will be removed
 var remove = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj);
@@ -141,6 +159,8 @@ var remove = function (userObj) {
   return d.promise;
 };
 
+/// used to get a user record (without checking password/etc)
+/// userObj.email == user record to get
 var get = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj),
@@ -158,6 +178,8 @@ var get = function (userObj) {
   return d.promise;
 };
 
+/// used to register a login for a user. Will update signInCount and lastSignIn
+/// userObj.email === user object to log in 
 var login = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj),
@@ -224,7 +246,10 @@ var calculateRollingAvg = function (obj) {
   return obj.avg;
 };
 
-
+/// take a survey object from the front end and do the appropriate math/user record updates
+/// surveyObj.from === user submitting survey
+/// surveyObj.for === user survey is being filled for
+/// questions === array of responses to questions
 var processSurvey = function (surveyObj) {
   var d = $q.defer(),
     // forUser = getUserRef({email: surveyObj.for}), /// be able to update the recipient
@@ -232,30 +257,35 @@ var processSurvey = function (surveyObj) {
     surveyResult = {},
     updatedUser = {};
   $q.all([
-    get({email: surveyObj.for}), /// check if the recipient exists first
+    get({email: surveyObj.for}),
     get({email: surveyObj.from})
   ]).then(function (users) { /// [0] === for, [1] === from
+      if (users[1].rated.indexOf(surveyObj.for) !== -1) { /// if they've already rated, reject
+        return d.reject({status: 400, message: "Already rated this friend"});
+      }
       var i = 0;
-      surveyResult = calculateSurvey(surveyObj.questions);
-      users[0].rating_avg = calculateRollingAvg({sample: surveyResult, count: users[0].rating_count, avg: users[0].rating_avg});
-      users[0].rating_count += 1;
+      surveyResult = calculateSurvey(surveyObj.questions); /// process survey responses into proper data
+      users[0].rating_count += 1; /// increase the count, naturally
+      users[0].rating_avg = calculateRollingAvg({sample: surveyResult, count: users[0].rating_count, avg: users[0].rating_avg}); /// update the rolling average with the latest sample
       for (i = 0; i < users[1].friends.length; i++) {
         if (users[1].friends[i].email === surveyObj.for) {
-          users[1].friends.splice(i, 1); /// remove from friend list
+          users[1].friends.splice(i, 1); /// remove from friend list so they don't try to fill out survey again
           break;
         }
       }
-      users[1].rated.push(surveyObj.for);
-      update(users[0]);
-      update(users[1]);
-      d.resolve(users[1]);
+      users[1].rated.push(surveyObj.for); /// add them to the rated list
+      update(users[0]); /// update recipient's scores
+      update(users[1]); /// update sender's rated list
+      return d.resolve(users[1]); /// return updated sender object to client
     },
     function (err) {
-      d.reject({'status': 404, 'message': 'User Not Found'});
+      return d.reject({'status': 404, 'message': 'User Not Found'});
     });
   return d.promise;
 };
 
+/// get a list of the user's current friends (so we know who needs to be surveyed - might not be used because friends are on user object)
+/// userObj.email === user to get friends of
 var getFriends = function (userObj) {
   var d = $q.defer(),
     friends = [],
@@ -264,21 +294,22 @@ var getFriends = function (userObj) {
     snapshot.forEach(function (obj) {
       friends.push(obj.val());
     });
-    d.resolve(friends);
+    return d.resolve(friends);
   });
   return d.promise;
 };
 
-var getMatchPercentage = function (scoresA, scoresB) { /// convert -1..1 to 0..100
-  return ((correlation.calc(scoresA, scoresB) * 100) + 100) / 2;
-};
-
+/// do math to turn the correlation value (-1..1) to a "percentage" (0..100)
+/// userA = user object
+/// userB = other user object
 var compareScores = function (userA, userB) {
   var scoresA = Object.keys(userA.rating_avg).map(function(k) { return userA.rating_avg[k]; }),
     scoresB = Object.keys(userB.rating_avg).map(function(k) { return userB.rating_avg[k]; });
-  return getMatchPercentage(scoresA, scoresB);
+  return ((correlation.calc(scoresA, scoresB) * 100) + 100) / 2;
 };
 
+/// get today's 10 matches for a given user
+/// userObj.email === user to get matches for
 var getMatches = function (userObj) {
   var d = $q.defer(),
     dimensions = ["o", "c", "e", "a", "n"];
@@ -319,6 +350,10 @@ var getMatches = function (userObj) {
   return d.promise;
 };
 
+/// register a like for a user
+/// currentUser.email === signed in user
+/// viewedUser.email === user being liked/disliked
+/// liked === whether or not the user is liked
 var liked = function (currentUser, viewedUser, liked) {
   var d = $q.defer();
   $q.all([
@@ -328,15 +363,14 @@ var liked = function (currentUser, viewedUser, liked) {
       if (obj[0].seen.indexOf(viewedUser.email) !== -1) {
         return d.reject({status: 400, message: "User already seen. Ignoring"});
       }
-      obj[0].seen.push(viewedUser.email);
-      if (liked) {
+      obj[0].seen.push(viewedUser.email); /// add to the seen list either way
+      if (liked) { /// if liked, add it to the liked list
         obj[0].liked.push(viewedUser.email);
         if (obj[1].liked.indexOf(currentUser.email) !== -1) { /// woot
           obj[0].matched.push(viewedUser.email);
           obj[1].matched.push(currentUser.email);
         }
       }
-      console.log(obj[0]);
       update(obj[0]); /// update user with seen, liked, matched
       if (liked) {
         update(obj[1]); /// only thing changed is if they matched
@@ -348,6 +382,7 @@ var liked = function (currentUser, viewedUser, liked) {
   return d.promise;
 };
 
+/// export a bunch of stuff
 module.exports = {
   model: User,
   update: update,
