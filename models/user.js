@@ -271,24 +271,6 @@ var getFriends = function (userObj) {
 
 var getMatchPercentage = function (scoresA, scoresB) { /// convert -1..1 to 0..100
   return ((correlation.calc(scoresA, scoresB) * 100) + 100) / 2;
-}
-
-var compareScoresAsync = function (userA, userB) {
-  var d = $q.defer(),
-    scoresA = [],
-    scoresB = [];
-  $q.all([
-    get({email: userA.email}),
-    get({email: userB.email})
-  ]).then(function (users) {
-    scoresA = Object.keys(users[0].rating_avg).map(function(k) { return users[0].rating_avg[k]; });
-    scoresB = Object.keys(users[1].rating_avg).map(function(k) { return users[1].rating_avg[k]; });
-    d.resolve(getMatchPercentage(scoresA, scoresB));
-  }, function (err) {
-    console.warn(err);
-    d.reject(err);
-  });
-  return d.promise;
 };
 
 var compareScores = function (userA, userB) {
@@ -348,6 +330,5 @@ module.exports = {
   processSurvey: processSurvey,
   all: all,
   getFriends: getFriends,
-  compare: compareScores,
   matches: getMatches
 };
