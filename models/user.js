@@ -9,7 +9,7 @@ var firebase = require('firebase'),
     email: "",
     password: "",
     friends: [], /// who their FB? friends are
-    surveyed: [], /// who they've already filled surveys for
+    rated: [], /// who they've already filled surveys for
     liked: [], /// who they've liked
     seen: [], /// who they've seen
     matches: [], /// who they've matched
@@ -51,6 +51,19 @@ var User = function (obj) {
   this.created = +new Date();
   this.lastSignIn = +new Date();
   this.signInCount = 0;
+};
+
+var all = function () {
+  var d = $q.defer(),
+    output = {};
+  usersRef.once('value', function (snapshot) {
+    snapshot.forEach(function (obj) {
+      output[obj.key()] = obj.val();
+    });
+    console.log(output);
+    d.resolve(output);
+  });
+  return d.promise;
 };
 
 var update = function (userObj, sendData) {
@@ -210,17 +223,42 @@ var processSurvey = function (surveyObj) {
     // fromUser = getUserRef({email: surveyObj.from}), /// be able to update the sender
     surveyResult = {},
     updatedUser = {};
-  get({email: surveyObj.for}) /// check if the recipient exists first
-    .then(function (user) {
+  $q.all([
+    get({email: surveyObj.for}), /// check if the recipient exists first
+    get({email: surveyObj.from})
+  ]).then(function (users) { /// [0] === for, [1] === from
+      var i = 0;
       surveyResult = calculateSurvey(surveyObj.questions);
-      user.rating_avg = calculateRollingAvg({sample: surveyResult, count: user.rating_count, avg: user.rating_avg});
-      user.rating_count += 1;
-      update(user);
-      d.resolve(surveyResult);
+      users[0].rating_avg = calculateRollingAvg({sample: surveyResult, count: users[0].rating_count, avg: users[0].rating_avg});
+      users[0].rating_count += 1;
+      for (i = 0; i < users[1].friends.length; i++) {
+        if (users[1].friends[i].email === surveyObj.for) {
+          users[1].friends.splice(i, 1); /// remove from friend list
+          break;
+        }
+      }
+      users[1].rated.push(surveyObj.for);
+      update(users[0]);
+      update(users[1]);
+      d.resolve(users[1]);
     },
     function (err) {
       d.reject({'status': 404, 'message': 'User Not Found'});
     });
+  return d.promise;
+};
+
+var getFriends = function (userObj) {
+  var d = $q.defer(),
+    friends = [],
+    friendsRef = getUserRef(userObj).child('friends');
+  friendsRef.once('value', function (snapshot) {
+    snapshot.forEach(function (obj) {
+      friends.push(obj.val());
+    });
+    console.log(friends);
+    d.resolve(friends);
+  });
   return d.promise;
 };
 
@@ -232,5 +270,7 @@ module.exports = {
   delete: remove,
   login: login,
   get: get,
-  processSurvey: processSurvey
+  processSurvey: processSurvey,
+  all: all,
+  getFriends: getFriends
 };

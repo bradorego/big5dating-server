@@ -1,22 +1,28 @@
 var express = require('express');
 var router = express.Router();
 var UserModel = require('../models/user');
-var errorHandler = function (err) {
+var errorHandler = function (err, res) {
   res.status(err.status);
   res.send(err);
 };
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  console.log(req.body);
-  res.send('respond with a resource');
+  UserModel.all()
+    .then(function (data) {
+      res.json(data);
+    }, function (err) {
+      errorHandler(err, res);
+    });
 });
 
-router.put(function (req, res) {
+router.put('/', function (req, res) {
   UserModel.login({email: req.body.email, password: req.body.password, increase: true})
     .then(function (data) {
       res.json(data);
-    }, errorHandler);
+    }, function (err) {
+      errorHandler(err, res);
+    });
 });
 
 router.post('/', function (req, res, next) { /// create users
@@ -24,14 +30,27 @@ router.post('/', function (req, res, next) { /// create users
     .then(function (user) {
       console.log(user);
       res.json(user);
-    }, errorHandler);
+    }, function (err) {
+      errorHandler(err, res);
+    });
+});
+
+router.get('/friends', function (req, res, next) {
+  UserModel.getFriends({email: req.query.email})
+    .then(function (friends) {
+      res.json(friends);
+    }, function (err) {
+      errorHandler(err, res);
+    });
 });
 
 router.post('/survey', function (req, res, next) {
   UserModel.processSurvey(req.body)
     .then(function (data) {
       res.json(data);
-    }, errorHandler);
+    }, function (err) {
+      errorHandler(err, res);
+    });
 });
 
 module.exports = router;
