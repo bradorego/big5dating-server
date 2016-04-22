@@ -34,4 +34,13 @@ router.get('/all', function (req, res, next) {
       res.json(data);
     });
 });
+
+router.get('/matches', function (req, res, next) {
+  user.matches({email: "me@bradorego.com"})
+    .then(function (data) {
+      res.json(data);
+    }, function (err) {
+      res.send(err);
+    });
+});
 module.exports = router;

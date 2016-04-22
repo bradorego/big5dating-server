@@ -62,7 +62,7 @@ var all = function (dimension) {
   if (dimension) {
     ref = ref.orderByChild("rating_avg/" + dimension);
   }
-  ref.once('value', function (snapshot) {
+  ref.limitToLast(100).once('value', function (snapshot) {
     snapshot.forEach(function (obj) {
       output.push(obj.val());
     });
@@ -269,18 +269,71 @@ var getFriends = function (userObj) {
   return d.promise;
 };
 
-var compareScores = function (userA, userB) {
+var getMatchPercentage = function (scoresA, scoresB) { /// convert -1..1 to 0..100
+  return ((correlation.calc(scoresA, scoresB) * 100) + 100) / 2;
+}
+
+var compareScoresAsync = function (userA, userB) {
   var d = $q.defer(),
-    scoresA = [], ///Object.keys(userA.rating_avg).map(function(k) { return userA.rating_avg[k]; }),
-    scoresB = []; ///Object.keys(userB.rating_avg).map(function(k) { return userB.rating_avg[k]; });
+    scoresA = [],
+    scoresB = [];
   $q.all([
     get({email: userA.email}),
     get({email: userB.email})
   ]).then(function (users) {
     scoresA = Object.keys(users[0].rating_avg).map(function(k) { return users[0].rating_avg[k]; });
     scoresB = Object.keys(users[1].rating_avg).map(function(k) { return users[1].rating_avg[k]; });
-    d.resolve((correlation.calc(scoresA, scoresB) * 100) + 100) / 2; /// convert -1..1 to 0..100
+    d.resolve(getMatchPercentage(scoresA, scoresB));
+  }, function (err) {
+    console.warn(err);
+    d.reject(err);
   });
+  return d.promise;
+};
+
+var compareScores = function (userA, userB) {
+  var scoresA = Object.keys(userA.rating_avg).map(function(k) { return userA.rating_avg[k]; }),
+    scoresB = Object.keys(userB.rating_avg).map(function(k) { return userB.rating_avg[k]; });
+  return getMatchPercentage(scoresA, scoresB);
+};
+
+var getMatches = function (userObj) {
+  var d = $q.defer(),
+    dimensions = ["o", "c", "e", "a", "n"];
+  $q.all([
+    get({email: userObj.email}),
+    all(dimensions[Math.floor(Math.random() * 5)]) /// for now, pick a random dimension to keep it interesting
+  ]).then(function (obj) { //// [0] === user, [1] === all
+    /// now, remove users that have already been seen
+    var i = 0,
+      j = 0,
+      alreadySeen = false,
+      user = obj[0],
+      allUsers = obj[1],
+      matches = []; /// pull the first 10 values
+    for (i = 0; i < allUsers.length; i++) { /// for all users
+      alreadySeen = false;
+      if (user.email === allUsers[i].email) {
+        continue; ///ignore yourself, silly
+      }
+      for (j = 0; j < user.seen.length; j++) { /// for user's seen list
+        if (user.seen[j] === allUsers[i].email) {
+          alreadySeen = true;
+        }
+      }
+      if (!alreadySeen) {
+        allUsers[i].matchPercentage = compareScores(user, allUsers[i]);
+        matches.push(allUsers[i]);
+      }
+      if (matches.length === 10) { /// escape once we hit 10
+        break;
+      }
+    }
+    return d.resolve(matches);
+  }, function (err) {
+    console.warn(err);
+    return d.reject(err);
+  })
   return d.promise;
 };
 
@@ -295,5 +348,6 @@ module.exports = {
   processSurvey: processSurvey,
   all: all,
   getFriends: getFriends,
-  compare: compareScores
+  compare: compareScores,
+  matches: getMatches
 };
