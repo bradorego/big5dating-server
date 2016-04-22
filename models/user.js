@@ -13,7 +13,7 @@ var firebase = require('firebase'),
     rated: [], /// who they've already filled surveys for
     liked: [], /// who they've liked
     seen: [], /// who they've seen
-    matches: [], /// who they've matched
+    matched: [], /// who they've matched
     rating_avg: {o: 0, c: 0, e: 0, a: 0,  n: 0, },
     rating_count: 0,
     created: 0,
@@ -354,8 +354,10 @@ var getMatches = function (userObj) {
 /// currentUser.email === signed in user
 /// viewedUser.email === user being liked/disliked
 /// liked === whether or not the user is liked
+//// TODO - figure out why self is in like/match list
 var liked = function (currentUser, viewedUser, liked) {
-  var d = $q.defer();
+  var d = $q.defer(),
+    matched = false;
   $q.all([
     get({email: currentUser.email}),
     get({email: viewedUser.email})
@@ -369,13 +371,14 @@ var liked = function (currentUser, viewedUser, liked) {
         if (obj[1].liked.indexOf(currentUser.email) !== -1) { /// woot
           obj[0].matched.push(viewedUser.email);
           obj[1].matched.push(currentUser.email);
+          matched = true;
         }
       }
       update(obj[0]); /// update user with seen, liked, matched
       if (liked) {
         update(obj[1]); /// only thing changed is if they matched
       }
-      return d.resolve(obj[0]);
+      return d.resolve({user: obj[0], matched: matched}); /// client should already know, but just in case...
     }, function (err) {
       return d.reject(err);
     });
