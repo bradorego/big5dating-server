@@ -179,7 +179,7 @@ var get = function (userObj) {
 };
 
 /// used to register a login for a user. Will update signInCount and lastSignIn
-/// userObj.email === user object to log in 
+/// userObj.email === user object to log in
 var login = function (userObj) {
   var d = $q.defer(),
     user = getUserRef(userObj),
