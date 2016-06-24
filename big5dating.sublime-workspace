@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"err",
+				"errorHandler"
+			],
+			[
+				"raing",
+				"rating_avg"
+			],
+			[
+				"sores",
+				"scoresA"
+			],
+			[
+				"rating",
+				"rating_avg"
+			],
+			[
+				"cons",
+				"conscientiousness"
+			],
+			[
 				"deviced",
 				"deviceDetailsCtrl"
 			],
@@ -71,7 +91,7 @@
 			"file": "app.js",
 			"settings":
 			{
-				"buffer_size": 1737,
+				"buffer_size": 1808,
 				"line_ending": "Unix"
 			}
 		},
@@ -79,7 +99,7 @@
 			"file": "routes/index.js",
 			"settings":
 			{
-				"buffer_size": 300,
+				"buffer_size": 1368,
 				"line_ending": "Unix"
 			}
 		},
@@ -87,16 +107,25 @@
 			"file": "models/user.js",
 			"settings":
 			{
-				"buffer_size": 5493,
+				"buffer_size": 13188,
 				"line_ending": "Unix",
 				"name": "user.js"
+			}
+		},
+		{
+			"file": "models/chat.js",
+			"settings":
+			{
+				"buffer_size": 805,
+				"line_ending": "Unix",
+				"name": "chat.js"
 			}
 		},
 		{
 			"file": "routes/users.js",
 			"settings":
 			{
-				"buffer_size": 952,
+				"buffer_size": 1867,
 				"line_ending": "Unix"
 			}
 		},
@@ -107,14 +136,6 @@
 				"buffer_size": 24,
 				"line_ending": "Unix",
 				"name": ".gitignore"
-			}
-		},
-		{
-			"file": "package.json",
-			"settings":
-			{
-				"buffer_size": 462,
-				"line_ending": "Unix"
 			}
 		},
 		{
@@ -182,6 +203,7 @@
 	],
 	"file_history":
 	[
+		"/Users/mi-bradorego/Development/big5dating/package.json",
 		"/Users/mi-bradorego/Development/big5dating/gulpfile.js",
 		"/Users/mi-bradorego/Development/newsflash/routes/index.js",
 		"/Users/mi-bradorego/Development/newsflash/public/javascripts/newsflash.controllers.js",
@@ -308,8 +330,7 @@
 		"/Users/mi-bradorego/Development/beerbatterbreakfast/_posts/2013-04-25-christmas-in-april.html",
 		"/Users/mi-bradorego/Development/beerbatterbreakfast/_posts/2013-04-20-international-house-of-pabrews.html",
 		"/Users/mi-bradorego/Development/beerbatterbreakfast/search_data.json",
-		"/Users/mi-bradorego/Development/beerbatterbreakfast/public/css/lanyon.scss",
-		"/Users/mi-bradorego/Development/beerbatterbreakfast/_posts/2013-04-04-safrits-winter-warmer.html"
+		"/Users/mi-bradorego/Development/beerbatterbreakfast/public/css/lanyon.scss"
 	],
 	"find":
 	{
@@ -332,6 +353,13 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"console.log",
+			"matched",
+			"compareScores",
+			"getMatchPercentage",
+			"reject",
+			"update(",
+			"console.log",
 			"lessRoot",
 			"start",
 			"userModel",
@@ -493,15 +521,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1737,
+						"buffer_size": 1808,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								450,
-								530
+								693,
+								698
 							]
 						],
 						"settings":
@@ -511,10 +539,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 107.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
@@ -523,15 +551,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 300,
+						"buffer_size": 1368,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								246,
-								246
+								248,
+								248
 							]
 						],
 						"settings":
@@ -539,10 +567,10 @@
 							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 3.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
@@ -551,15 +579,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5493,
+						"buffer_size": 13188,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5238,
-								5238
+								5280,
+								5280
 							]
 						],
 						"settings":
@@ -570,7 +598,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2898.0,
+						"translation.y": 2881.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -578,19 +606,48 @@
 				},
 				{
 					"buffer": 3,
-					"file": "routes/users.js",
+					"file": "models/chat.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 952,
+						"buffer_size": 805,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								899,
-								899
+								686,
+								686
+							]
+						],
+						"settings":
+						{
+							"auto_name": "chat.js",
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "routes/users.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1867,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1654,
+								1654
 							]
 						],
 						"settings":
@@ -600,14 +657,14 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 525.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 5,
 					"file": ".gitignore",
 					"semi_transient": false,
 					"settings":
@@ -632,37 +689,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "package.json",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 462,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								269,
-								269
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
